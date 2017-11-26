@@ -1,22 +1,40 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
+from datetime import datetime
 # from itertools import zip_longest
-# from com.sun.star.sheet import CellFlags as cf # 定数
+from com.sun.star.sheet import CellFlags as cf # 定数
 # from com.sun.star.beans import Property  # Struct
 # from com.sun.star.ucb import OpenCommandArgument2  # Struct
 # from com.sun.star.ucb import OpenMode  # 定数
 # from com.sun.star.ucb import Command  # Struct
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。 
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。
-	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
-	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-	workdir = "" 
-	contenturl
+	sheet = getNewSheet(doc, "ChidrenRetriever")  # 新規シートの取得。	
+	sheet[0, 0].setString("DataStreamComposer - sets the data stream of a document resource.")
+	sheet[0, 1].setString("The data stream is obtained from another (the source) document resource before.")
+	t = datetime.now().isoformat()
+	s = t.split(".")[0]
+	print(s.replace("-", "").replace(":", ""))
+# 	print(t.isoformat().translate(table))
 	
-	srcfile = "$(inst)/sdk/examples/DevelopersGuide/UCB/data/data.txt"  # SDKをインストールしていないときはdata.txtへのパスが必要。
-	pathsubstservice = smgr.createInstanceWithContext("com.sun.star.comp.framework.PathSubstitution", ctx)
-	srcurl = pathsubstservice.substituteVariables(srcfile, True)  # $(inst)を変換する。fileurlが返ってくる。
+	
+	
+# 	with open("data.txt", "w", encoding="utf-8") as f:
+# 		f.write("sample sample sample sample sample sample sample sample EOF")	
+# 	with open("data.txt", "w", encoding="utf-8") as f:
+# 		f.write("sample sample sample sample sample sample sample sample EOF")
+# 	
+# 	
+# 	
+# 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
+# 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
+# 	workdir = "" 
+# 	contenturl
+# 	
+# 	srcfile = "$(inst)/sdk/examples/DevelopersGuide/UCB/data/data.txt"  # SDKをインストールしていないときはdata.txtへのパスが必要。
+# 	pathsubstservice = smgr.createInstanceWithContext("com.sun.star.comp.framework.PathSubstitution", ctx)
+# 	srcurl = pathsubstservice.substituteVariables(srcfile, True)  # $(inst)を変換する。fileurlが返ってくる。
 
 
 
@@ -62,21 +80,21 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 # 	cellcursor.collapseToSize(len(datarows[0]), len(datarows))  # (列、行)で指定。セルカーサーの範囲をdatarowsに合せる。
 # 	cellcursor.setDataArray(datarows)  # セルカーサーにdatarowsを代入。代入できるのは整数(int、ただしboolを除く)か文字列のみ。
 # 	cellcursor.getColumns().setPropertyValue("OptimalWidth", True)  # セルカーサーのセル範囲の列幅を最適化する。行幅は限定サれない。		
-# def getNewSheet(doc, sheetname):  # docに名前sheetnameのシートを返す。sheetnameがすでにあれば連番名を使う。
-# 	cellflags = cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES
-# 	sheets = doc.getSheets()  # シートコレクションを取得。
-# 	c = 1  # 連番名の最初の番号。
-# 	newname = sheetname
-# 	while newname in sheets: # 同名のシートがあるとき。sheets[sheetname]ではFalseのときKeyErrorになる。
-# 		if not sheets[newname].queryContentCells(cellflags):  # シートが未使用のとき
-# 			return sheets[sheetname]  # 未使用の同名シートを返す。
-# 		newname = "{}{}".format(sheetname, c)  # 連番名を作成。
-# 		c += 1	
-# 	sheets.insertNewByName(newname, len(sheets))   # 新しいシートを挿入。同名のシートがあるとRuntimeExceptionがでる。
-# 	if "Sheet1" in sheets:  # デフォルトシートがあるとき。
-# 		if not sheets["Sheet1"].queryContentCells(cellflags):  # シートが未使用のとき
-# 			del sheets["Sheet1"]  # シートを削除する。
-# 	return sheets[newname]
+def getNewSheet(doc, sheetname):  # docに名前sheetnameのシートを返す。sheetnameがすでにあれば連番名を使う。
+	cellflags = cf.VALUE+cf.DATETIME+cf.STRING+cf.ANNOTATION+cf.FORMULA+cf.HARDATTR+cf.STYLES
+	sheets = doc.getSheets()  # シートコレクションを取得。
+	c = 1  # 連番名の最初の番号。
+	newname = sheetname
+	while newname in sheets: # 同名のシートがあるとき。sheets[sheetname]ではFalseのときKeyErrorになる。
+		if not sheets[newname].queryContentCells(cellflags):  # シートが未使用のとき
+			return sheets[sheetname]  # 未使用の同名シートを返す。
+		newname = "{}{}".format(sheetname, c)  # 連番名を作成。
+		c += 1	
+	sheets.insertNewByName(newname, len(sheets))   # 新しいシートを挿入。同名のシートがあるとRuntimeExceptionがでる。
+	if "Sheet1" in sheets:  # デフォルトシートがあるとき。
+		if not sheets["Sheet1"].queryContentCells(cellflags):  # シートが未使用のとき
+			del sheets["Sheet1"]  # シートを削除する。
+	return sheets[newname]
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
