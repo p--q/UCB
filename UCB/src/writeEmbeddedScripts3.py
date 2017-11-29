@@ -21,7 +21,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 # 		simplefileaccess.kill(scriptpath)
 	outputstream = simplefileaccess.openFileWrite(scriptpath)
 	textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)  # pipeにデータを書き込むのに利用。
-	textoutputstream.setOutputStream(outputstream)  
+	textoutputstream.setOutputStream(outputstream)  # アウトプットストリームにpipeを設定。
 	script = """# -*- coding: utf-8 -*-
 def macro():
 	doc = XSCRIPTCONTEXT.getDocument()
@@ -32,7 +32,7 @@ def macro():
 	textoutputstream.writeString(script)  # テキストデータをアウトプットストリームに設定。
 # 	textoutputstream.flush()  # アウトプットストリームを送り出す。
 	textoutputstream.closeOutput()  # アウトプットストリームを閉じる。		
-
+		
 # 	simplefileaccess.writeFile(scriptpath, pipe)  # pipeをインプットストリームとしてマクロファイルに書き込む。書き換えできない?
 # 	pipe.closeInput()  # pipeのインプットストリームを閉じる。
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
