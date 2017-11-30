@@ -5,10 +5,6 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-# 	pipe = smgr.createInstanceWithContext("com.sun.star.io.Pipe", ctx)  # pipeにデータを書き込んでpipeのデータを読み込ます。
-
-	
-	
 	transientdocumentsdocumentcontentfactory = smgr.createInstanceWithContext("com.sun.star.frame.TransientDocumentsDocumentContentFactory", ctx)
 	documentcontent = transientdocumentsdocumentcontentfactory.createDocumentContent(doc)  # ドキュメントのコンテントを取得。
 	contentidentifierstring = documentcontent.getIdentifier().getContentIdentifier()  # ドキュメントコンテントのルートパス、vnd.sun.star.tdoc:/IDを取得。IDは一時的な整数。
@@ -17,24 +13,22 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	if not simplefileaccess.exists(embeddedmacropath):  # 埋め込みマクロフォルダが存在しないとき。
 		simplefileaccess.createFolder(embeddedmacropath)  # 埋め込みマクロフォルダを作成する。urlの最後に/がついていても、途中のフォルダがなくても作成してくれる。ただし、中身を入れないとmanifest.xmlに記録されるだけ。
 	scriptpath = "{}/hello.py".format(embeddedmacropath)  # 埋め込みマクロファイルのパス。
-# 	if simplefileaccess.exists(scriptpath):
-# 		simplefileaccess.kill(scriptpath)
-	outputstream = simplefileaccess.openFileWrite(scriptpath)
-	textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)  # pipeにデータを書き込むのに利用。
-	textoutputstream.setOutputStream(outputstream)  # アウトプットストリームにpipeを設定。
+	if simplefileaccess.exists(scriptpath):
+		simplefileaccess.kill(scriptpath)
+	tempfile = smgr.createInstanceWithContext("com.sun.star.io.TempFile", ctx)	
+	outputstream = simplefileaccess.openFileWrite(tempfile.Uri)
+	textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)  # アウトプットストリームに文字列を書き込むのに利用。
+	textoutputstream.setOutputStream(outputstream)  # アウトプットストリームを設定。
 	script = """# -*- coding: utf-8 -*-
 def macro():
 	doc = XSCRIPTCONTEXT.getDocument()
 	controller = doc.getCurrentController()  # コントローラーを取得。
 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	sheet["A8"].setString("Hello by the embedded script.")
+	sheet["A11"].setString("Hello by the embedded script.")
 """  # 書き込むテキストデータ。
 	textoutputstream.writeString(script)  # テキストデータをアウトプットストリームに設定。
-# 	textoutputstream.flush()  # アウトプットストリームを送り出す。
 	textoutputstream.closeOutput()  # アウトプットストリームを閉じる。		
-		
-# 	simplefileaccess.writeFile(scriptpath, pipe)  # pipeをインプットストリームとしてマクロファイルに書き込む。書き換えできない?
-# 	pipe.closeInput()  # pipeのインプットストリームを閉じる。
+	simplefileaccess.copy(tempfile.Uri, scriptpath)
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
