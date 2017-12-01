@@ -32,7 +32,7 @@ def macro():
 	doc = XSCRIPTCONTEXT.getDocument()
 	controller = doc.getCurrentController()  # コントローラーを取得。
 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	sheet["A7"].setString("Hello by the embedded script.")
+	sheet["A1"].setString("Hello by the embedded script.")
 """
 	textoutputstream.writeString(script)
 	textoutputstream.flush()

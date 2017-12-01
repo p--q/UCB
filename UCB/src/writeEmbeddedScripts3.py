@@ -13,18 +13,16 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	if not simplefileaccess.exists(embeddedmacropath):  # 埋め込みマクロフォルダが存在しないとき。
 		simplefileaccess.createFolder(embeddedmacropath)  # 埋め込みマクロフォルダを作成する。urlの最後に/がついていても、途中のフォルダがなくても作成してくれる。ただし、中身を入れないとmanifest.xmlに記録されるだけ。
 	scriptpath = "{}/hello.py".format(embeddedmacropath)  # 埋め込みマクロファイルのパス。
-	if simplefileaccess.exists(scriptpath):
-		simplefileaccess.kill(scriptpath)
-	tempfile = smgr.createInstanceWithContext("com.sun.star.io.TempFile", ctx)	
-	outputstream = simplefileaccess.openFileWrite(tempfile.Uri)
-	textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)  # アウトプットストリームに文字列を書き込むのに利用。
+	tempfile = smgr.createInstanceWithContext("com.sun.star.io.TempFile", ctx)	# TempFile
+	outputstream = simplefileaccess.openFileWrite(tempfile.Uri)  # 一時ファイルのアウトプットストリームを取得。
+	textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)  # TextOutputStream
 	textoutputstream.setOutputStream(outputstream)  # アウトプットストリームを設定。
 	script = """# -*- coding: utf-8 -*-
 def macro():
 	doc = XSCRIPTCONTEXT.getDocument()
 	controller = doc.getCurrentController()  # コントローラーを取得。
 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	sheet["A11"].setString("Hello by the embedded script.")
+	sheet["A1"].setString("Hello by the embedded script.")
 """  # 書き込むテキストデータ。
 	textoutputstream.writeString(script)  # テキストデータをアウトプットストリームに設定。
 	textoutputstream.closeOutput()  # アウトプットストリームを閉じる。		
