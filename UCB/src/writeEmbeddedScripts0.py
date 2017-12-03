@@ -1,6 +1,6 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
-import unohelper  # オートメーションには必須(必須なのはuno)。
+# import unohelper  # オートメーションには必須(必須なのはuno)。
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
@@ -20,7 +20,6 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	if not simplefileaccess.exists(pythondir):
 		print("failed to create python directory.")
 	pythondir = "{}/".format(pythondir)
-# 	scriptpath = "{}hello.py".format(pythondir)
 	scriptpath = "{}hello.py".format(pythondir)
 	if simplefileaccess.exists(scriptpath):
 		simplefileaccess.kill(scriptpath)
