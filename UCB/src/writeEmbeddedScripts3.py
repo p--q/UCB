@@ -22,11 +22,11 @@ def macro():
 	doc = XSCRIPTCONTEXT.getDocument()
 	controller = doc.getCurrentController()  # コントローラーを取得。
 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	sheet["A1"].setString("Hello by the embedded script.")
+	sheet["A3"].setString("Hello by the embedded script.")
 """  # 書き込むテキストデータ。
 	textoutputstream.writeString(script)  # テキストデータをアウトプットストリームに設定。
 	textoutputstream.closeOutput()  # アウトプットストリームを閉じる。		
-	simplefileaccess.copy(tempfile.Uri, scriptpath)
+	simplefileaccess.copy(tempfile.Uri, scriptpath)  # 一時ファイルをドキュメント内にコピーする。
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。

@@ -1,6 +1,6 @@
 #!/opt/libreoffice5.4/program/python
 # -*- coding: utf-8 -*-
-import unohelper  # オートメーションには必須(必須なのはuno)。
+# import unohelper  # オートメーションには必須(必須なのはuno)。
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
@@ -21,7 +21,7 @@ def macro():
 	doc = XSCRIPTCONTEXT.getDocument()
 	controller = doc.getCurrentController()  # コントローラーを取得。
 	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
-	sheet["A1"].setString("Hello by the embedded script.")
+	sheet["A2"].setString("Hello by the embedded script.")
 """  # 書き込むテキストデータ。
 	textoutputstream.writeString(script)  # テキストデータをアウトプットストリームに設定。
 	textoutputstream.closeOutput()  # アウトプットストリームを閉じる。		
