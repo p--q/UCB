@@ -17,32 +17,27 @@ def macro():
 	scriptsstorage = documentstorage.openStorageElement("Scripts", ElementModes.READ)
 	pythonstorage = scriptsstorage.openStorageElement("python", ElementModes.READ)
 	src_path = os.path.join(os.getcwd(), "src")
-	
-	
-	if not os.path.exists(src_path):
-		os.mkdir(src_path) 
-	os.chdir(src_path)
-	
-# 	if not simplefileaccess.exists(embeddedmacropath):  # 埋め込みマクロフォルダが存在しないとき。
-# 		simplefileaccess.createFolder(embeddedmacropath)  # 埋め込みマクロフォルダを作成する。urlの最後に/がついていても、途中のフォルダがなくても作成してくれる。ただし、中身を入れないとmanifest.xmlに記録されるだけ。
-
-	
-	for name in pythonstorage:
-		if pythonstorage.isStorageElement(name):
-			os.mkdir(name)
-		elif pythonstorage.isStreamElement(name):
-			stream = pythonstorage.cloneStreamElement(name)
-			simplefileaccess.writeFile(''.join((dir_url, name)), stream.getInputStream())
-
-
-	
-	
-	
-	
-	
-
-
-
+	src_fileurl = unohelper.systemPathToFileUrl(src_path)
+	if not simplefileaccess.exists(src_fileurl):
+		simplefileaccess.createFolder(src_fileurl)
+	scripts_fileurl = "/".join((src_fileurl, "Scripts"))
+	if not simplefileaccess.exists(scripts_fileurl):
+		simplefileaccess.createFolder(scripts_fileurl)	
+	python_fileurl = "/".join((scripts_fileurl, "python"))
+	if not simplefileaccess.exists(python_fileurl):
+		simplefileaccess.createFolder(python_fileurl)		
+	getContents(simplefileaccess, pythonstorage, python_fileurl)
+def getContents(simplefileaccess, storage, pwd):	
+	for name in storage:
+		fileurl = "/".join((pwd, name))
+		if storage.isStorageElement(name):
+			if not simplefileaccess.exists(fileurl):
+				simplefileaccess.createFolder(fileurl)
+			substrorage = storage.openStorageElement(name, ElementModes.READ)
+			getContents(simplefileaccess, substrorage, fileurl)
+		elif storage.isStreamElement(name):
+			stream = storage.cloneStreamElement(name)
+			simplefileaccess.writeFile(fileurl, stream.getInputStream())	
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
