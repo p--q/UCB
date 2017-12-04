@@ -17,6 +17,8 @@ def macro():
 	scriptsstorage = documentstorage.openStorageElement("Scripts", ElementModes.READ)
 	pythonstorage = scriptsstorage.openStorageElement("python", ElementModes.READ)
 	src_path = os.path.join(os.getcwd(), "src")
+	
+	
 	if not os.path.exists(src_path):
 		os.mkdir(src_path) 
 	os.chdir(src_path)
@@ -28,10 +30,6 @@ def macro():
 	for name in pythonstorage:
 		if pythonstorage.isStorageElement(name):
 			os.mkdir(name)
-			
-			
-			
-		
 		elif pythonstorage.isStreamElement(name):
 			stream = pythonstorage.cloneStreamElement(name)
 			simplefileaccess.writeFile(''.join((dir_url, name)), stream.getInputStream())
