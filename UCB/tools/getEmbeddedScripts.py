@@ -15,13 +15,20 @@ def macro():
 	desktop = ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # デスクトップの取得。
 	components = desktop.getComponents()  # ロードしているコンポーネントコレクションを取得。
 	for component in components:  # 各コンポーネントについて。
-		if component.getURL()==doc_fileurl:  # fileurlが一致するとき
-			documentstorage = component.getDocumentStorage()  # コンポーネントからストレージを取得。
-			break
+		if hasattr(component, "getURL"):  # スタートモジュールではgetURL()はないため。
+			if component.getURL()==doc_fileurl:  # fileurlが一致するとき
+				documentstorage = component.getDocumentStorage()  # コンポーネントからストレージを取得。
+				break
 	else:	
 		storagefactory = smgr.createInstanceWithContext('com.sun.star.embed.StorageFactory', ctx)  # StorageFactory
 		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.READ))  # odsファイルからストレージを読み取り専用で取得。
+	if not "Scripts" in documentstorage:
+		print("The Scripts directory does not exist in {}.".format(ods))
+		return
 	scriptsstorage = documentstorage.openStorageElement("Scripts", ElementModes.READ)  # ドキュメント内のScriptsストレージを取得。
+	if not "python" in scriptsstorage:
+		print("The Scripts/python directory does not exist in {}.".format(ods))
+		return	
 	pythonstorage = scriptsstorage.openStorageElement("python", ElementModes.READ)  # pythonストレージを取得。
 	src_path = os.path.join(os.getcwd(), "src")  # 出力先のフォルダのパスを取得。
 	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。

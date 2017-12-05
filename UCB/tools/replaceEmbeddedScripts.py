@@ -11,47 +11,92 @@ def macro():
 	os.chdir("..")  # 一つ上のディレクトリに移動。
 	ods = glob.glob("*.ods")[0]  # odsファイルを取得。最初の一つのみ取得。
 	systempath = os.path.join(os.getcwd(), ods)  # odsファイルのフルパス。
-	doc_fileurl = unohelper.systemPathToFileUrl(systempath)  # fileurlに変換。
+	doc_fileurl = unohelper.systemPathToFileUrl(systempath)  # fileurlに変換。	
+	os.chdir("src")
+	python_path = os.path.join("Scripts", "python")
+	if not os.path.exists("Scripts") or not os.path.exists(python_path):
+		os.makedirs(python_path)
+	os.chdir(python_path)
+	names = os.listdir()
+	if not names:
+		print("There is no source file to embed in the document.")
+		return 
 	desktop = ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # デスクトップの取得。
 	components = desktop.getComponents()  # ロードしているコンポーネントコレクションを取得。
 	for component in components:  # 各コンポーネントについて。
-		if component.getURL()==doc_fileurl:  # fileurlが一致するとき
-			documentstorage = component.getDocumentStorage()  # コンポーネントからストレージを取得。
-			break
+		if hasattr(component, "getURL"):  # スタートモジュールではgetURL()はないため。
+			if component.getURL()==doc_fileurl:  # fileurlが一致するとき
+				documentstorage = component.getDocumentStorage()  # コンポーネントからストレージを取得。
+				break
 	else:	
 		storagefactory = smgr.createInstanceWithContext('com.sun.star.embed.StorageFactory', ctx)  # StorageFactory
-		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.READ))  # odsファイルからストレージを読み取り専用で取得。
-	scriptsstorage = documentstorage.openStorageElement("Scripts", ElementModes.READ)  # ドキュメント内のScriptsストレージを取得。
+		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.WRITE))  # odsファイルからストレージを書き込み用で取得。
+	scriptsstorage = documentstorage.openStorageElement("Scripts", ElementModes.WRITE)  # ドキュメント内のScriptsストレージを取得。存在しなければ作成される。
+	scriptsstorage.commit()
+	if "python" in scriptsstorage:  # pythonストレージがすでに存在するとき。
+		scriptsstorage.removeElement("python")  # 既存のpythonストレージを削除する。
+	pythonstorage = scriptsstorage.openStorageElement("python", ElementModes.WRITE)  # pythonストレージを書き込み用で取得。存在しなければ作成される。
+	pythonstorage.commit()
+
+	pwd_fileurl = unohelper.systemPathToFileUrl(os.getcwd())  # fileurlに変換。	
+
+
+	for name in names:
+		if os.path.isdir(name):
+			pass
+		
+		else:
+			stream = pythonstorage.openStreamElement(name, ElementModes.WRITE)
+			outputstream = stream.getOutputStream()
+			textoutputstream = smgr.createInstanceWithContext("com.sun.star.io.TextOutputStream", ctx)  # TextOutputStream
+			textoutputstream.setOutputStream(outputstream)  # アウトプットストリームを設定。
+			script = """# -*- coding: utf-8 -*-
+def macro():
+	doc = XSCRIPTCONTEXT.getDocument()
+	controller = doc.getCurrentController()  # コントローラーを取得。
+	sheet = controller.getActiveSheet()  # アクティブなシートを取得。
+	sheet["A2"].setString("Hello by the embedded script.")
+"""  # 書き込むテキストデータ。
+			textoutputstream.writeString(script)  # テキストデータをアウトプットストリームに設定。
+			textoutputstream.closeOutput()  # アウトプットストリームを閉じる。  
+
+			
+			
+			
+			
 	
-	# 存在確認が必要。
+	
+
+		
+
+
+
 	
 	
-	
-	pythonstorage = scriptsstorage.openStorageElement("python", ElementModes.READ)  # pythonストレージを取得。
-	src_path = os.path.join(os.getcwd(), "src")  # 出力先のフォルダのパスを取得。
-	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
-	if not simplefileaccess.exists(src_fileurl):  # 出力先フォルダが存在しない時。
-		simplefileaccess.createFolder(src_fileurl)  # 出力先フォルダを作成。
-	scripts_fileurl = "/".join((src_fileurl, "Scripts"))  # Scriptsフォルダのfileurl。
-	if not simplefileaccess.exists(scripts_fileurl):
-		simplefileaccess.createFolder(scripts_fileurl)	
-	python_fileurl = "/".join((scripts_fileurl, "python"))  # pythonフォルダを作成。
-	if simplefileaccess.exists(python_fileurl):  # pythonフォルダがすでにあるとき
-		simplefileaccess.kill(python_fileurl)  # すでにあるpythonフォルダを削除。
-	simplefileaccess.createFolder(python_fileurl)  # pythonフォルダを作成。
-	getContents(simplefileaccess, pythonstorage, python_fileurl)  # 再帰的にストレージの内容を出力先フォルダに展開。
-def getContents(simplefileaccess, storage, pwd):  # SimpleFileAccess、ストレージ、出力フォルダのfileurl	
-	for name in storage:
-		fileurl = "/".join((pwd, name))
-		if storage.isStorageElement(name):  # ストレージのときはフォルダとして処理。
-			if not simplefileaccess.exists(fileurl):
-				simplefileaccess.createFolder(fileurl)
-			substrorage = storage.openStorageElement(name, ElementModes.READ)  # サブストレージを取得。
-			getContents(simplefileaccess, substrorage, fileurl)
-		elif storage.isStreamElement(name):  # ストリームの時はファイルに書き出す。
-			stream = storage.cloneStreamElement(name)  # サブストリームを取得。読み取り専用。
-			simplefileaccess.writeFile(fileurl, stream.getInputStream())  # ファイルが存在しなければ新規作成してくれる。			
-g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
+# 	src_path = os.path.join(os.getcwd(), "src")  # 出力先のフォルダのパスを取得。
+# 	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
+# 	if not simplefileaccess.exists(src_fileurl):  # 出力先フォルダが存在しない時。
+# 		simplefileaccess.createFolder(src_fileurl)  # 出力先フォルダを作成。
+# 	scripts_fileurl = "/".join((src_fileurl, "Scripts"))  # Scriptsフォルダのfileurl。
+# 	if not simplefileaccess.exists(scripts_fileurl):
+# 		simplefileaccess.createFolder(scripts_fileurl)	
+# 	python_fileurl = "/".join((scripts_fileurl, "python"))  # pythonフォルダを作成。
+# 	if simplefileaccess.exists(python_fileurl):  # pythonフォルダがすでにあるとき
+# 		simplefileaccess.kill(python_fileurl)  # すでにあるpythonフォルダを削除。
+# 	simplefileaccess.createFolder(python_fileurl)  # pythonフォルダを作成。
+# 	getContents(simplefileaccess, pythonstorage, python_fileurl)  # 再帰的にストレージの内容を出力先フォルダに展開。
+# def getContents(simplefileaccess, storage, pwd):  # SimpleFileAccess、ストレージ、出力フォルダのfileurl	
+# 	for name in storage:
+# 		fileurl = "/".join((pwd, name))
+# 		if storage.isStorageElement(name):  # ストレージのときはフォルダとして処理。
+# 			if not simplefileaccess.exists(fileurl):
+# 				simplefileaccess.createFolder(fileurl)
+# 			substrorage = storage.openStorageElement(name, ElementModes.READ)  # サブストレージを取得。
+# 			getContents(simplefileaccess, substrorage, fileurl)
+# 		elif storage.isStreamElement(name):  # ストリームの時はファイルに書き出す。
+# 			stream = storage.cloneStreamElement(name)  # サブストリームを取得。読み取り専用。
+# 			simplefileaccess.writeFile(fileurl, stream.getInputStream())  # ファイルが存在しなければ新規作成してくれる。			
+# g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
 		import officehelper
