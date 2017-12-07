@@ -16,12 +16,34 @@ def macro():
 	components = desktop.getComponents()  # ロードしているコンポーネントコレクションを取得。
 	for component in components:  # 各コンポーネントについて。
 		if hasattr(component, "getURL"):  # スタートモジュールではgetURL()はないため。
-			if component.getURL()==doc_fileurl:  # fileurlが一致するとき
-				documentstorage = component.getDocumentStorage()  # コンポーネントからストレージを取得。
+			if component.getURL()==doc_fileurl:  # fileurlが一致するとき、ドキュメントが開いているということ。
+				doc = XSCRIPTCONTEXT.getDocument()
+				transientdocumentsdocumentcontentfactory = smgr.createInstanceWithContext("com.sun.star.frame.TransientDocumentsDocumentContentFactory", ctx)
+				transientdocumentsdocumentcontent = transientdocumentsdocumentcontentfactory.createDocumentContent(doc)
+				contentidentifierstring = transientdocumentsdocumentcontent.getIdentifier().getContentIdentifier()  # ex. vnd.sun.star.tdoc:/1
+				python_fileurl = "/".join((contentidentifierstring, "Scripts/python"))  # ex. vnd.sun.star.tdoc:/1/Scripts/python
 				break
-	else:	
-		storagefactory = smgr.createInstanceWithContext('com.sun.star.embed.StorageFactory', ctx)  # StorageFactory
-		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.READ))  # odsファイルからストレージを読み取り専用で取得。
+	else:  # ドキュメントを開いていない時。
+		python_fileurl = "".join(("vnd.sun.star.pkg://", doc_fileurl.replace("/", "&2F"), "/Scripts/python/tmp1.py"))
+# 		python_fileurl = "".join(("vnd.sun.star.zip://", doc_fileurl.replace("/", "&2F"), "/Scripts/python/tmp1.py"))
+# 		python_fileurl = "".join(("vnd.sun.star.zip://", doc_fileurl, "/Scripts/python/tmp1.py"))
+# 		python_fileurl = "".join(("vnd.sun.star.zip://", doc_fileurl))
+# 		python_fileurl = doc_fileurl
+		print(simplefileaccess.exists(python_fileurl))
+
+
+		dest_dir = createDest(simplefileaccess)
+		simplefileaccess.copy(python_fileurl, dest_dir)
+
+
+
+# 		print(simplefileaccess.exists(python_fileurl))
+		
+		
+		
+		
+# 		storagefactory = smgr.createInstanceWithContext('com.sun.star.embed.StorageFactory', ctx)  # StorageFactory
+# 		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.READ))  # odsファイルからストレージを読み取り専用で取得。
 	if not "Scripts" in documentstorage:
 		print("The Scripts directory does not exist in {}.".format(ods))
 		return
@@ -32,8 +54,6 @@ def macro():
 	pythonstorage = scriptsstorage.openStorageElement("python", ElementModes.READ)  # pythonストレージを取得。
 	src_path = os.path.join(os.getcwd(), "src")  # 出力先のフォルダのパスを取得。
 	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
-	
-	
 	if not simplefileaccess.exists(src_fileurl):  # 出力先フォルダが存在しない時。
 		simplefileaccess.createFolder(src_fileurl)  # 出力先フォルダを作成。
 	scripts_fileurl = "/".join((src_fileurl, "Scripts"))  # Scriptsフォルダのfileurl。
@@ -55,6 +75,19 @@ def getContents(simplefileaccess, storage, pwd):  # SimpleFileAccess、ストレ
 		elif storage.isStreamElement(name):  # ストリームの時はファイルに書き出す。
 			stream = storage.cloneStreamElement(name)  # サブストリームを取得。読み取り専用。
 			simplefileaccess.writeFile(fileurl, stream.getInputStream())  # ファイルが存在しなければ新規作成してくれる。			
+
+def createDest(simplefileaccess):
+	src_path = os.path.join(os.getcwd(), "src")  # srcフォルダのパスを取得。
+	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
+	destdir = "/".join((src_fileurl, "Scripts/python"))
+	if simplefileaccess.exists(destdir):  # pythonフォルダがすでにあるとき
+		simplefileaccess.kill(destdir)  # すでにあるpythonフォルダを削除。	
+	simplefileaccess.createFolder(destdir)  # pythonフォルダを作成。
+	return destdir
+
+
+
+
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。

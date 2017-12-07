@@ -35,27 +35,7 @@ def macro():
 		simplefileaccess.createFolder(scripts_fileurl)	
 	filesystemstoragefactory = smgr.createInstanceWithContext('com.sun.star.embed.FileSystemStorageFactory', ctx)	
 	filesystemstorage = filesystemstoragefactory.createInstanceWithArguments((scripts_fileurl, ElementModes.WRITE))	
-	scriptsstorage.copyToStorage(filesystemstorage)	
-		
-		
-		
-		
-# 	python_fileurl = "/".join((scripts_fileurl, "python"))  # pythonフォルダを作成。
-# 	if simplefileaccess.exists(python_fileurl):  # pythonフォルダがすでにあるとき
-# 		simplefileaccess.kill(python_fileurl)  # すでにあるpythonフォルダを削除。
-# 	simplefileaccess.createFolder(python_fileurl)  # pythonフォルダを作成。
-# 	getContents(simplefileaccess, pythonstorage, python_fileurl)  # 再帰的にストレージの内容を出力先フォルダに展開。
-# def getContents(simplefileaccess, storage, pwd):  # SimpleFileAccess、ストレージ、出力フォルダのfileurl	
-# 	for name in storage:
-# 		fileurl = "/".join((pwd, name))
-# 		if storage.isStorageElement(name):  # ストレージのときはフォルダとして処理。
-# 			if not simplefileaccess.exists(fileurl):
-# 				simplefileaccess.createFolder(fileurl)
-# 			substrorage = storage.openStorageElement(name, ElementModes.READ)  # サブストレージを取得。
-# 			getContents(simplefileaccess, substrorage, fileurl)
-# 		elif storage.isStreamElement(name):  # ストリームの時はファイルに書き出す。
-# 			stream = storage.cloneStreamElement(name)  # サブストリームを取得。読み取り専用。
-# 			simplefileaccess.writeFile(fileurl, stream.getInputStream())  # ファイルが存在しなければ新規作成してくれる。			
+	scriptsstorage.copyToStorage(filesystemstorage)  # エラー	
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
