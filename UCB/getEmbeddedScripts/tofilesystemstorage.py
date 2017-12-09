@@ -26,17 +26,34 @@ def macro():
 		print("The embedded macro folder does not exist in {}.".format(ods))
 		return
 	dest_dir = createDest(simplefileaccess)  # 出力先フォルダのfileurlを取得。
+	filesystemstoragefactory = smgr.createInstanceWithContext('com.sun.star.embed.FileSystemStorageFactory', ctx)
+	filesystemstorage = filesystemstoragefactory.createInstanceWithArguments((dest_dir, ElementModes.WRITE))
 	scriptsstorage = documentstorage["Scripts"]  # documentstorage["Scripts"]["python"]ではイテレーターになれない。
-	getContents(simplefileaccess, scriptsstorage["python"], dest_dir)  # 再帰的にストレージの内容を出力先フォルダに展開。
-def getContents(simplefileaccess, storage, pwd):  # SimpleFileAccess、ストレージ、出力フォルダのfileurl	
+	getContents(simplefileaccess, scriptsstorage["python"], filesystemstorage)  # 再帰的にストレージの内容を出力先ストレージに展開。
+def getContents(simplefileaccess, storage, dest):  # SimpleFileAccess、ストレージ、出力先ストレージ	
 	for name in storage:  # ストレージの各要素名について。
-		fileurl = "/".join((pwd, name))  # 出力先fileurl。
-		if storage.isStorageElement(name):  # ストレージのときはフォルダとして処理。
-			if not simplefileaccess.exists(fileurl):  # 出力先フォルダが存在しない時は作成する。
-				simplefileaccess.createFolder(fileurl)
-			getContents(simplefileaccess, storage[name], fileurl)  # 子要素について同様にする。
-		elif storage.isStreamElement(name):  # ストリームの時はファイルに書き出す。
-			simplefileaccess.writeFile(fileurl, storage[name].getInputStream())  # ファイルが存在しなければ新規作成してくれる。			
+		if storage.isStorageElement(name):  # ストレージのとき。
+			subdest = dest.openStorageElement(name, ElementModes.WRITE)
+			getContents(simplefileaccess, storage[name], subdest)  # 子要素について同様にする。
+		elif storage.isStreamElement(name):  # ストリームの時。
+			
+			# ストリームをストリームにコピーする方法がわからない。
+			
+			stream = storage[name]
+			
+			
+			subdest = dest.openStreamElement(name, ElementModes.READWRITE)
+			outputstream = subdest.getOutputStream() 
+			
+			outputstream.writeBytes()
+			
+			
+			outputstream.closeOutput()
+			
+# 			storage.copyElementTo(name, dest, name)
+			
+			
+# 			simplefileaccess.writeFile(fileurl, storage[name].getInputStream())  # ファイルが存在しなければ新規作成してくれる。			
 def createDest(simplefileaccess):  # 出力先フォルダのfileurlを取得する。
 	src_path = os.path.join(os.getcwd(), "src")  # srcフォルダのパスを取得。
 	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。

@@ -7,12 +7,6 @@ from com.sun.star.embed import ElementModes  # 定数
 def macro():  
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-	
-		
-	global tcu
-	tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)
-	
-	
 	simplefileaccess = smgr.createInstanceWithContext("com.sun.star.ucb.SimpleFileAccess", ctx)  # SimpleFileAccess
 	os.chdir("..")  # 一つ上のディレクトリに移動。
 	ods = glob.glob("*.ods")[0]  # odsファイルを取得。最初の一つのみ取得。
@@ -31,6 +25,13 @@ def macro():
 	if not ("Scripts" in documentstorage and "python" in documentstorage["Scripts"]):
 		print("The embedded macro folder does not exist in {}.".format(ods))
 		return
+	source_dir = getSourceDir(simplefileaccess)  # 入力元フォルダのfileurlを取得。
+	if simplefileaccess.exists(source_dir):  # 入力元フォルダが存在するとき。
+		if not simplefileaccess.exists(python_fileurl):  # ドキュメント内フォルダがなければ作成しておかないといけない。
+			simplefileaccess.createFolder(python_fileurl)
+	
+	
+	
 	dest_dir = createDest(simplefileaccess)  # 出力先フォルダのfileurlを取得。
 	scriptsstorage = documentstorage["Scripts"]  # documentstorage["Scripts"]["python"]ではイテレーターになれない。
 	getContents(simplefileaccess, scriptsstorage["python"], dest_dir)  # 再帰的にストレージの内容を出力先フォルダに展開。
@@ -43,14 +44,13 @@ def getContents(simplefileaccess, storage, pwd):  # SimpleFileAccess、ストレ
 			getContents(simplefileaccess, storage[name], fileurl)  # 子要素について同様にする。
 		elif storage.isStreamElement(name):  # ストリームの時はファイルに書き出す。
 			simplefileaccess.writeFile(fileurl, storage[name].getInputStream())  # ファイルが存在しなければ新規作成してくれる。			
-def createDest(simplefileaccess):  # 出力先フォルダのfileurlを取得する。
+			
+			
+			
+def getSourceDir(simplefileaccess):  # 出力先フォルダのfileurlを取得する。
 	src_path = os.path.join(os.getcwd(), "src")  # srcフォルダのパスを取得。
 	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
-	destdir = "/".join((src_fileurl, "Scripts/python"))
-	if simplefileaccess.exists(destdir):  # pythonフォルダがすでにあるとき
-		simplefileaccess.kill(destdir)  # すでにあるpythonフォルダを削除。	
-	simplefileaccess.createFolder(destdir)  # pythonフォルダを作成。
-	return destdir	
+	return "/".join((src_fileurl, "Scripts/python"))
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
 		import officehelper
