@@ -5,6 +5,7 @@ encoding//getEmbeddedScripts/getbypackage.py=utf-8
 encoding//getEmbeddedScripts/getbystorage.py=utf-8
 encoding//getEmbeddedScripts/getbyzipfileaccess.py=utf-8
 encoding//getEmbeddedScripts/tofilesystemstorage.py=utf-8
+encoding//src/DataStreamComposer.py=utf-8
 encoding//tools/getEmbeddedScripts.py=utf-8
 encoding//tools/getEmbeddedScripts2.py=utf-8
 encoding//tools/getEmbeddedScripts3.py=utf-8
