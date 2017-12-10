@@ -2,47 +2,41 @@
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
 import os
-from datetime import datetime
 from com.sun.star.ucb import OpenCommandArgument2  # Struct
 from com.sun.star.ucb import OpenMode  # 定数
 from com.sun.star.io import XActiveDataSink
 from com.sun.star.ucb import Command  # Struct
-from com.sun.star.ucb import InsertCommandArgument  # Struct
-def macro():  # オートメーションでのみ実行可。マクロだとカレントディレクトリが使えない。
-	t = datetime.now().isoformat().split(".")[0].replace("-", "").replace(":", "")  # コピー先ファイル名に使う年月日T時分秒を結合した文字列を取得。
-	targetfile = "".join(("resource-", t))  # コピー先ファイル名。
-	with open(targetfile, 'w', encoding="utf-8") as f: # コピー先のファイルの作成。
-		f.write("This is the content of a sample data file.")  # コピー先ファイルの内容。これはコピー元の内容に上書きされて消える。
-	if not os.path.exists(os.path.join("data", "data.txt")):  # コピー元ファイルが存在しない時。
-		if not os.path.exists("data"):  # コピー元ファイルを入れているdataフォルダがない時。
+def macro():  # オートメーションでのみ実行可。マクロだとカレントディレクトリが使えない。  
+	if not os.path.exists(os.path.join("data", "data.txt")):  # インプットストリームを取得するファイルがなければ作成する。
+		if not os.path.exists("data"):  # dataフォルダが存在しない時。
 			os.mkdir("data")  # dataフォルダを作成。
 		os.chdir("data")  # dataフォルダに移動。
-		with open("data.txt", 'w', encoding="utf-8") as f:  # コピー元のファイルの作成。
-			f.write("sample sample sample EOF")  # 	コピー元ファイルの内容。EOFはただの文字列。
-		os.chdir("..")  # 元のフォルダに戻る。
+		with open("data.txt", 'w', encoding="utf-8") as f:  # インプットストリームを取得するファイルを作成。
+			f.write("sample sample sample sample sample sample sample sample EOF")	
+		os.chdir("..") # 元のフォルダに戻る。
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-	print("""-----------------------------------------------------------------
-DataStreamComposer - sets the data stream of a document resource.
-The data stream is obtained from another (the source) document resource before.
------------------------------------------------------------------""")
+	print("""-----------------------------------------------------------------------
+DataStreamRetriever - obtains the data stream from a document resource.
+-----------------------------------------------------------------------""")
 	pwd = unohelper.systemPathToFileUrl(os.getcwd())  # 現在のディレクトリのfileurlを取得。。
-	targeturl = "/".join((pwd, targetfile))  # コピー先ファイルのfileurl。
-	sourceurl =  "/".join((pwd, "data/data.txt"))  # コピー元ファイルのfileurlを取得。 	
+	sourceurl =  "/".join((pwd, "data/data.txt"))  # インプットストリームを取得するfileurlを取得。	
 	ucb =  smgr.createInstanceWithContext("com.sun.star.ucb.UniversalContentBroker", ctx)  # UniversalContentBroker。
-	content = ucb.queryContent(ucb.createContentIdentifier(sourceurl))  # fileurlからFileContentを取得。
+	content = ucb.queryContent(ucb.createContentIdentifier(sourceurl))  # FileContentを取得。
 	datasink = MyActiveDataSink()  # XActiveDataSinkを持ったクラスをインスタンス化。
 	arg = OpenCommandArgument2(Mode=OpenMode.DOCUMENT, Priority=32768, Sink=datasink)  # SinkにXActiveDataSinkを持ったインスタンスを渡すとアクティブデータシンクとして使える。
 	command = Command(Name="open", Handle=-1, Argument=arg)  # コマンド。
 	content.execute(command, 0, None)  # コピー元ファイルについてコマンドを実行。setInputStream()でアクティブデータシンクにインプットストリームが渡される。
-	inputstream = datasink.getInputStream()  # アクティブデータシンクからコピー元ファイルのインプットストリームを取得。
-	content = ucb.queryContent(ucb.createContentIdentifier(targeturl))  # コピー先ファイルのFileContentを取得。
-	insertcommandargument = InsertCommandArgument(Data=inputstream, ReplaceExisting=True)  # 上書きモードでストリームで置換させる。
-	command = Command(Name="insert", Handle=-1, Argument=insertcommandargument)  # コマンド。
-	content.execute(command, 0, None)  # コピー先ファイルについてコマンドを実行。
-	print("""Setting data stream succeeded.
-Source URL: {}
-Target URL: {}""".format(sourceurl, targeturl))
+	inputstream = datasink.getInputStream()  # アクティブデータシンクからインプットストリームを取得。
+	if inputstream:  # インプットストリームが取得出来た時。
+		txt = "Getting data stream for resource {} succeeded.".format(sourceurl)
+		print("""{}
+{}""".format(txt, "-"*len(txt)))
+		n, buffer = inputstream.readSomeBytes([], 65536)  # 第1引数のリストは戻り値のタプルの第2要素で返ってくる。
+		txt = bytes(buffer).decode("utf-8")  # "".join(map(chr, buffer))でもよい。bytearrayをbyteに変換して文字列に変換している。
+		print("""Read bytes : {}
+Read data (only first 64K displayed):
+{}	""".format(n, txt))
 class MyActiveDataSink(unohelper.Base, XActiveDataSink):  # アクティブデータシンク。	
 	def setInputStream(self, stream):
 		self.stream = stream

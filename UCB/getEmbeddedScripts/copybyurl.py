@@ -3,7 +3,6 @@
 import unohelper  # オートメーションには必須(必須なのはuno)。
 import glob
 import os
-from com.sun.star.embed import ElementModes  # 定数
 def macro():  
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
@@ -16,31 +15,24 @@ def macro():
 	components = desktop.getComponents()  # ロードしているコンポーネントコレクションを取得。
 	for component in components:  # 各コンポーネントについて。
 		if hasattr(component, "getURL"):  # スタートモジュールではgetURL()はないため。
-			if component.getURL()==doc_fileurl:  # fileurlが一致するとき
-				documentstorage = component.getDocumentStorage()  # コンポーネントからストレージを取得。
+			if component.getURL()==doc_fileurl:  # fileurlが一致するとき、ドキュメントが開いているということ。
+				doc = XSCRIPTCONTEXT.getDocument()
+				transientdocumentsdocumentcontentfactory = smgr.createInstanceWithContext("com.sun.star.frame.TransientDocumentsDocumentContentFactory", ctx)
+				transientdocumentsdocumentcontent = transientdocumentsdocumentcontentfactory.createDocumentContent(doc)
+				pkgurl = transientdocumentsdocumentcontent.getIdentifier().getContentIdentifier()  # ex. vnd.sun.star.tdoc:/1
 				break
-	else:  # ドキュメントが開いていない時。
-		storagefactory = smgr.createInstanceWithContext('com.sun.star.embed.StorageFactory', ctx)  # StorageFactory
-		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.READ))  # odsファイルからストレージを読み取り専用で取得。
-	if not ("Scripts" in documentstorage and "python" in documentstorage["Scripts"]):  # ドキュメント内に埋め込みマクロフォルダがない時は終了する。
-		print("The embedded macro folder does not exist in {}.".format(ods))
-		return
+	else:  # ドキュメントを開いていない時。
+		urireferencefactory = smgr.createInstanceWithContext("com.sun.star.uri.UriReferenceFactory", ctx)  # UriReferenceFactory
+		urireference = urireferencefactory.parse(doc_fileurl)  # ドキュメントのUriReferenceを取得。
+		vndsunstarpkgurlreferencefactory = smgr.createInstanceWithContext("com.sun.star.uri.VndSunStarPkgUrlReferenceFactory", ctx)  # VndSunStarPkgUrlReferenceFactory
+		vndsunstarpkgurlreference = vndsunstarpkgurlreferencefactory.createVndSunStarPkgUrlReference(urireference)  # ドキュメントのvnd.sun.star.pkgプロトコールにUriReferenceを変換。
+		pkgurl = vndsunstarpkgurlreference.getUriReference()  # UriReferenceから文字列のURIを取得。
+	python_fileurl = "/".join((pkgurl, "Scripts/python"))  # ドキュメント内フォルダへのフルパスを取得。
 	dest_dir = createDest(simplefileaccess)  # 出力先フォルダのfileurlを取得。
-	filesystemstoragefactory = smgr.createInstanceWithContext('com.sun.star.embed.FileSystemStorageFactory', ctx)
-	filesystemstorage = filesystemstoragefactory.createInstanceWithArguments((dest_dir, ElementModes.WRITE))  # ファイルシステムストレージを取得。
-	scriptsstorage = documentstorage["Scripts"]  # documentstorage["Scripts"]["python"]ではイテレーターになれない。
-	getContents(scriptsstorage["python"], filesystemstorage)  # 再帰的にストレージの内容を出力先ストレージに展開。
-def getContents(storage, dest):  # SimpleFileAccess、ストレージ、出力先ストレージ	
-	for name in storage:  # ストレージの各要素名について。
-		if storage.isStorageElement(name):  # ストレージの時。
-			subdest = dest.openStorageElement(name, ElementModes.WRITE)  # 出力先に同名のストレージの作成。
-			getContents(storage[name], subdest)  # 子要素について同様にする。
-		elif storage.isStreamElement(name):  # ストリームの時。
-			subdest = dest.openStreamElement(name, ElementModes.WRITE)  # 出力先に同名のストリームを作成。
-			inputstream = storage[name].getInputStream()  # 読み取るファイルのインプットストリームを取得。
-			outputstream = subdest.getOutputStream()  # 書き込むファイルのアウトプットストリームを取得。
-			dummy, bytes = inputstream.readBytes([], inputstream.available())  # インプットストリームからデータをすべて読み込む。バイト配列の要素数とバイト配列のタプルが返る。
-			outputstream.writeBytes(bytes)  # バイト配列をアウトプットストリームに渡す。
+	if simplefileaccess.exists(python_fileurl):  # 埋め込みマクロフォルダが存在する時。
+		simplefileaccess.copy(python_fileurl, dest_dir)  # 埋め込みマクロフォルダを出力先フォルダにコピーする。ドキュメントを閉じているときはIsFolderプロパティが取得できないとエラー。
+	else:  # 埋め込みマクロフォルダが存在しない時。
+		print("The embedded macro folder does not exist in {}.".format(ods))	
 def createDest(simplefileaccess):  # 出力先フォルダのfileurlを取得する。
 	src_path = os.path.join(os.getcwd(), "src")  # srcフォルダのパスを取得。
 	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
@@ -48,7 +40,7 @@ def createDest(simplefileaccess):  # 出力先フォルダのfileurlを取得す
 	if simplefileaccess.exists(destdir):  # pythonフォルダがすでにあるとき
 		simplefileaccess.kill(destdir)  # すでにあるpythonフォルダを削除。	
 	simplefileaccess.createFolder(destdir)  # pythonフォルダを作成。
-	return destdir	
+	return destdir			
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
 		import officehelper
@@ -88,4 +80,5 @@ if __name__ == "__main__":  # オートメーションで実行するとき
 			return ScriptContext(ctx)  
 		return createXSCRIPTCONTEXT()  # XSCRIPTCONTEXTの取得。
 	XSCRIPTCONTEXT = automation()  # XSCRIPTCONTEXTを取得。	
-	macro()  # マクロの実行。
+	macro()
+	

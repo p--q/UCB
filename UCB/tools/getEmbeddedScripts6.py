@@ -2,8 +2,7 @@
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
 import glob
-import os, sys
-from com.sun.star.embed import ElementModes  # 定数
+import os
 def macro():  
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
@@ -12,6 +11,7 @@ def macro():
 	ods = glob.glob("*.ods")[0]  # odsファイルを取得。最初の一つのみ取得。
 	systempath = os.path.join(os.getcwd(), ods)  # odsファイルのフルパス。
 	doc_fileurl = unohelper.systemPathToFileUrl(systempath)  # fileurlに変換。
+	macro_path = "Scripts/python"
 	desktop = ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # デスクトップの取得。
 	components = desktop.getComponents()  # ロードしているコンポーネントコレクションを取得。
 	for component in components:  # 各コンポーネントについて。
@@ -21,61 +21,17 @@ def macro():
 				transientdocumentsdocumentcontentfactory = smgr.createInstanceWithContext("com.sun.star.frame.TransientDocumentsDocumentContentFactory", ctx)
 				transientdocumentsdocumentcontent = transientdocumentsdocumentcontentfactory.createDocumentContent(doc)
 				contentidentifierstring = transientdocumentsdocumentcontent.getIdentifier().getContentIdentifier()  # ex. vnd.sun.star.tdoc:/1
-				python_fileurl = "/".join((contentidentifierstring, "Scripts/python"))  # ex. vnd.sun.star.tdoc:/1/Scripts/python
+				python_fileurl = "/".join((contentidentifierstring, macro_path))  # ex. vnd.sun.star.tdoc:/1/Scripts/python
 				break
 	else:  # ドキュメントを開いていない時。
-		python_fileurl = "".join(("vnd.sun.star.pkg://", doc_fileurl.replace("/", "&2F"), "/Scripts/python/tmp1.py"))
-# 		python_fileurl = "".join(("vnd.sun.star.zip://", doc_fileurl.replace("/", "&2F"), "/Scripts/python/tmp1.py"))
-# 		python_fileurl = "".join(("vnd.sun.star.zip://", doc_fileurl, "/Scripts/python/tmp1.py"))
-# 		python_fileurl = "".join(("vnd.sun.star.zip://", doc_fileurl))
-# 		python_fileurl = doc_fileurl
-		print(simplefileaccess.exists(python_fileurl))
-
-
+		urireferencefactory = smgr.createInstanceWithContext("com.sun.star.uri.UriReferenceFactory", ctx)  
+		urireference = urireferencefactory.parse(doc_fileurl)
+		vndsunstarpkgurlreferencefactory = smgr.createInstanceWithContext("com.sun.star.uri.VndSunStarPkgUrlReferenceFactory", ctx)  
+		vndsunstarpkgurlreference = vndsunstarpkgurlreferencefactory.createVndSunStarPkgUrlReference(urireference)
+		vndsunstarpkgurl = vndsunstarpkgurlreference.getUriReference()
+		python_fileurl = "".join((vndsunstarpkgurl, macro_path))
 		dest_dir = createDest(simplefileaccess)
-		simplefileaccess.copy(python_fileurl, dest_dir)
-
-
-
-# 		print(simplefileaccess.exists(python_fileurl))
-		
-		
-		
-		
-# 		storagefactory = smgr.createInstanceWithContext('com.sun.star.embed.StorageFactory', ctx)  # StorageFactory
-# 		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.READ))  # odsファイルからストレージを読み取り専用で取得。
-	if not "Scripts" in documentstorage:
-		print("The Scripts directory does not exist in {}.".format(ods))
-		return
-	scriptsstorage = documentstorage.openStorageElement("Scripts", ElementModes.READ)  # ドキュメント内のScriptsストレージを取得。
-	if not "python" in scriptsstorage:
-		print("The Scripts/python directory does not exist in {}.".format(ods))
-		return	
-	pythonstorage = scriptsstorage.openStorageElement("python", ElementModes.READ)  # pythonストレージを取得。
-	src_path = os.path.join(os.getcwd(), "src")  # 出力先のフォルダのパスを取得。
-	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
-	if not simplefileaccess.exists(src_fileurl):  # 出力先フォルダが存在しない時。
-		simplefileaccess.createFolder(src_fileurl)  # 出力先フォルダを作成。
-	scripts_fileurl = "/".join((src_fileurl, "Scripts"))  # Scriptsフォルダのfileurl。
-	if not simplefileaccess.exists(scripts_fileurl):
-		simplefileaccess.createFolder(scripts_fileurl)	
-	python_fileurl = "/".join((scripts_fileurl, "python"))  # pythonフォルダを作成。
-	if simplefileaccess.exists(python_fileurl):  # pythonフォルダがすでにあるとき
-		simplefileaccess.kill(python_fileurl)  # すでにあるpythonフォルダを削除。
-	simplefileaccess.createFolder(python_fileurl)  # pythonフォルダを作成。
-	getContents(simplefileaccess, pythonstorage, python_fileurl)  # 再帰的にストレージの内容を出力先フォルダに展開。
-def getContents(simplefileaccess, storage, pwd):  # SimpleFileAccess、ストレージ、出力フォルダのfileurl	
-	for name in storage:
-		fileurl = "/".join((pwd, name))
-		if storage.isStorageElement(name):  # ストレージのときはフォルダとして処理。
-			if not simplefileaccess.exists(fileurl):
-				simplefileaccess.createFolder(fileurl)
-			substrorage = storage.openStorageElement(name, ElementModes.READ)  # サブストレージを取得。
-			getContents(simplefileaccess, substrorage, fileurl)
-		elif storage.isStreamElement(name):  # ストリームの時はファイルに書き出す。
-			stream = storage.cloneStreamElement(name)  # サブストリームを取得。読み取り専用。
-			simplefileaccess.writeFile(fileurl, stream.getInputStream())  # ファイルが存在しなければ新規作成してくれる。			
-
+		simplefileaccess.copy(python_fileurl, dest_dir)		
 def createDest(simplefileaccess):
 	src_path = os.path.join(os.getcwd(), "src")  # srcフォルダのパスを取得。
 	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
@@ -84,10 +40,6 @@ def createDest(simplefileaccess):
 		simplefileaccess.kill(destdir)  # すでにあるpythonフォルダを削除。	
 	simplefileaccess.createFolder(destdir)  # pythonフォルダを作成。
 	return destdir
-
-
-
-
 g_exportedScripts = macro, #マクロセレクターに限定表示させる関数をタプルで指定。		
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。

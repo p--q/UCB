@@ -9,24 +9,22 @@ from com.sun.star.ucb import OpenMode  # 定数
 from com.sun.star.ucb import Command  # Struct
 def macro(documentevent=None):  # 引数は文書のイベント駆動用。 
 	doc = XSCRIPTCONTEXT.getDocument() if documentevent is None else documentevent.Source  # ドキュメントのモデルを取得。 
-	contenturl = "file:///"
-	propnames = ["Title", "IsDocument"]
+	contenturl = "file:///"  # 子要素のプロパティを取得したい親要素のfileurl
+	propnames = "Title", "IsDocument"  # 取得するプロパティのタプル。
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。
-	ucb =  smgr.createInstanceWithContext("com.sun.star.ucb.UniversalContentBroker", ctx)
-	content = ucb.queryContent(ucb.createContentIdentifier(contenturl))
-	if content:
-		props = []
-		[props.append(Property(Name=propname, Handle=-1)) for propname in propnames]
+	ucb =  smgr.createInstanceWithContext("com.sun.star.ucb.UniversalContentBroker", ctx)  # UniversalContentBroker
+	content = ucb.queryContent(ucb.createContentIdentifier(contenturl))  # fileurlを元にFile Contentsを取得。
+	if content:  # File Contentsが取得できた時。
+		props = [Property(Name=propname, Handle=-1) for propname in propnames]
 		arg = OpenCommandArgument2(Mode=OpenMode.ALL, Priority=32768, Properties=props)
-		command = Command(Name="open", Handle=-1, Argument=arg)
-		dynamicresultset = content.execute(command, 0, None)
+		command = Command(Name="open", Handle=-1, Argument=arg)  # NameとArgumentでexecute()の戻り値の型が決まる。
+		dynamicresultset = content.execute(command, 0, None)  # XDynamicResultSet型が返る。
 		resultset = dynamicresultset.getStaticResultSet()
 		outputs = []
 		flg = resultset.first()
 		while flg:
-			propsvalues = []
-			propsvalues.append(resultset.queryContentIdentifierString())
+			propsvalues = [resultset.queryContentIdentifierString()]
 			for i in range(1, len(props)+1):
 				propvalue = resultset.getObject(i, None)
 				if isinstance(propvalue, bool):  # ブール型の時
