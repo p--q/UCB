@@ -2,7 +2,6 @@
 # -*- coding: utf-8 -*-
 import unohelper  # オートメーションには必須(必須なのはuno)。
 import os
-import uno
 from datetime import datetime
 from com.sun.star.beans import PropertyValue  # Struct
 from com.sun.star.ucb import Command  # Struct
