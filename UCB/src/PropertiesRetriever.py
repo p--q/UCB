@@ -33,7 +33,7 @@ PropertiesRetriever - obtains property values from a resource.
 # 	props = [Property(Name=propname, Handle=-1) for propname in propnames]
 	
 	
-	
+
 	
 	command = Command(Name="getPropertyValues", Handle=-1, Argument=tuple(props))
 	values = content.execute(command, 0, None)
