@@ -23,8 +23,19 @@ PropertiesRetriever - obtains property values from a resource.
 	ucb =  smgr.createInstanceWithContext("com.sun.star.ucb.UniversalContentBroker", ctx)
 	content = ucb.queryContent(ucb.createContentIdentifier(sourceurl))
 	propnames = "Title", "IsDocument"
-	props = [Property(Name=propname, Handle=-1) for propname in propnames]
-	command = Command(Name="getPropertyValues", Handle=-1, Argument=props)
+	props = []
+	for propname in propnames:
+		prop = Property()
+		prop.Name = propname
+		prop.Handle = -1
+		props.append(prop)
+	
+# 	props = [Property(Name=propname, Handle=-1) for propname in propnames]
+	
+	
+	
+	
+	command = Command(Name="getPropertyValues", Handle=-1, Argument=tuple(props))
 	values = content.execute(command, 0, None)
 	
 	pass

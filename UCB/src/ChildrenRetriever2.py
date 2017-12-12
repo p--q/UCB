@@ -32,7 +32,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	kwargs = {"TemplateDescription": templatedescription, "setTitle": title, "setDisplayDirectory": templateurl, "setCurrentFilter": filterall, "appendFilter": filters}
 	filepicker = createFilePicker(ctx, smgr, kwargs)  # ファイル選択ダイアログを取得。		
 	if not filepicker.execute()==ExecutableDialogResults.OK:  # ファイル保存ダイアログを表示する。
-		return
+		return  # ファイルが選択されなかった時は終了。
 	fileurl = filepicker.getFiles()[0]  # ダイアログで選択されたファイルのパスを取得。fileurlのタプルで返ってくるので先頭の要素を取得。
 	urireferencefactory = smgr.createInstanceWithContext("com.sun.star.uri.UriReferenceFactory", ctx)  # UriReferenceFactory
 	urireference = urireferencefactory.parse(fileurl)  # ドキュメントのUriReferenceを取得。
@@ -44,11 +44,9 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 	props = [Property(Name=propname, Handle=-1) for propname in propnames]
 	arg = OpenCommandArgument2(Mode=OpenMode.ALL, Priority=32768, Properties=props)
 	command = Command(Name="open", Handle=-1, Argument=arg)  # NameとArgumentでexecute()の戻り値の型が決まる。
-	outputs = []
-	getProps = createGetProps(simplefileaccess, propnames, ucb, command, outputs)
-	if not simplefileaccess.exists(contenturl):
-		return
-	getProps(contenturl)
+	outputs = []  # 出力行をいれるリスト。
+	getProps = createGetProps(simplefileaccess, propnames, ucb, command, outputs)  # 関数getPropsを取得。
+	getProps(contenturl)  # outputsに結果の行が入る。
 	sheet = getNewSheet(doc, "ChidrenRetriever")  # 新規シートの取得。	
 	datarows = [("URL:", *["{}:".format(p) for p in propnames])]
 	datarows.extend(outputs)
