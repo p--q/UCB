@@ -1,4 +1,5 @@
 eclipse.preferences.version=1
+encoding//getEmbeddedScripts/byzipfile.py=utf-8
 encoding//getEmbeddedScripts/copybyurl.py=utf-8
 encoding//getEmbeddedScripts/copyfromtdc.py=utf-8
 encoding//getEmbeddedScripts/getbypackage.py=utf-8

@@ -26,7 +26,7 @@ def macro(documentevent=None):  # 引数は文書のイベント駆動用。
 		templateurl = ctx.getByName('/singletons/com.sun.star.util.thePathSettings').getPropertyValue("Work")  # ホームフォルダを取得。
 	title = "Select an office document to analyze"  # ファイル選択ダイアログのタイトル。
 	templatedescription = TemplateDescription.FILEOPEN_SIMPLE  # ファイル選択ダイアログの種類。
-	filters = {'Writer Document': 'odt', 'Calc Document': 'ods'}  # 表示フィルターの辞書。
+	filters = {'Writer Document': '*.odt', 'Calc Document': '*.ods'}  # 表示フィルターの辞書。*をつけておかないとWindowsで選択されない。
 	filterall = "All Document Files"  # デフォルト表示フィルター名。
 	filters[filterall] = ";".join(filters.values())  # まとめたフィルターを辞書に追加。	
 	kwargs = {"TemplateDescription": templatedescription, "setTitle": title, "setDisplayDirectory": templateurl, "setCurrentFilter": filterall, "appendFilter": filters}
@@ -114,8 +114,8 @@ def createFilePicker(ctx, smgr, kwargs):  # ファイル選択ダイアログを
 			if key in kwargs:  # appendFilterキーがある時。
 				filters = kwargs.pop(key)  # 値を取得。値はフィルター名をキー、拡張子を値とする辞書。
 				for uiname in sorted(filters.keys()):
-					displayname = uiname if sys.platform.startswith('win') else "{} (*.{})".format(uiname, filters[uiname])  # 表示フィルターの作成。Windowsの場合は拡張子を含めない。
-					getattr(filepicker, key)(displayname, "*.{}".format(filters[uiname]))					
+					displayname = uiname if sys.platform.startswith('win') else "{} ({})".format(uiname, filters[uiname].replace("*.", ""))  # 表示フィルターの作成。*.がついていると表示されない。Windowsの場合は拡張子を含めない。
+					getattr(filepicker, key)(displayname, filters[uiname])				
 			if kwargs:
 				[getattr(filepicker, key)(val) for key, val in kwargs.items()]
 		return filepicker
