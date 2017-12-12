@@ -13,9 +13,7 @@ def macro():
 	output_path = "/".join((src_path, embeddemacro_path))
 	if os.path.exists(output_path):
 		shutil.rmtree(output_path)
-	for name in odszip.namelist():
-		if name.startswith(embeddemacro_path):
-			odszip.extract(name, path=src_path)
+	[odszip.extract(name, path=src_path) for name in odszip.namelist() if name.startswith(embeddemacro_path)]
 	print("Extract the embedded macro folder from {}.".format(ods))
 if __name__ == "__main__":  # オートメーションで実行するとき	
 	macro()
