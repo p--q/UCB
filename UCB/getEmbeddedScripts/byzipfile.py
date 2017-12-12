@@ -9,7 +9,7 @@ def macro():  # オートメーションでのみ実行可。
 	ods = glob.glob("*.ods")[0]  # odsファイルを取得。最初の一つのみ取得。
 	src_path = os.path.join(os.getcwd(), "src")  # srcフォルダのパスを取得。
 	embeddemacro_path = "Scripts/python/"  # ドキュメント内のパス。
-	output_path = "/".join((src_path, embeddemacro_path))  # 出力先フォルダのパス。
+	output_path = "/".join((src_path, embeddemacro_path))  # 出力先フォルダのパス。src/Scripts/python/
 	if os.path.exists(output_path):  # 出力先フォルダが存在する時。
 		shutil.rmtree(output_path)  # 出力先フォルダを削除。
 	with ZipFile(ods , 'r') as odszip: # odsファイルをZipFileで読み取り専用で開く。
