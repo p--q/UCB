@@ -26,12 +26,12 @@ def macro():
 		scriptstorage = documentstorage["Scripts"]
 	else:
 		scriptstorage = documentstorage.openStorageElement("Scripts", ElementModes.WRITE)  # 出力先に同名のストレージの作成。
-		scriptstorage.commit()
+# 		scriptstorage.commit()
 	if "python" in scriptstorage:
 		pythonstrorage = scriptstorage["python"]
 	else:
 		pythonstrorage = scriptstorage.openStorageElement("python", ElementModes.WRITE) 
-		pythonstrorage.commit()
+# 		pythonstrorage.commit()
 	sourcedir = getSource(simplefileaccess)  # コピー元フォルダのfileurlを取得。	
 	if not sourcedir:
 		print("{} does not exist.".format(sourcedir))	
@@ -45,7 +45,7 @@ def toDocumentStorage(srcstorage, deststorage):  # SimpleFileAccess、ストレ�
 		if srcstorage.isStorageElement(name):  # ストレージの時。
 			subdest = deststorage.openStorageElement(name, ElementModes.WRITE)  # 出力先に同名のストレージの作成。
 			toDocumentStorage(srcstorage[name], subdest)  # 子要素について同様にする。
-			subdest.commit()
+# 			subdest.commit()
 		elif srcstorage.isStreamElement(name):  # ストリームの時。
 			subdest = deststorage.openStreamElement(name, ElementModes.WRITE)  # 出力先に同名のストリームを作成。
 			inputstream = srcstorage[name].getInputStream()  # 読み取るファイルのインプットストリームを取得。
