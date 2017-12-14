@@ -21,17 +21,29 @@ def macro():
 				break
 	else:  # ドキュメントが開いていない時。
 		storagefactory = smgr.createInstanceWithContext('com.sun.star.embed.StorageFactory', ctx)  # StorageFactory
-		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.WRITE))  # odsファイルからストレージを書き込み用で取得。
+		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.READWRITE))  # odsファイルからストレージを書き込み用で取得。
+		
+		
+		
+		
+		
+	scriptstorage = documentstorage.openStorageElement("Scripts", ElementModes.READWRITE)  # ドキュメントにScriptsストレージを開く、なければ作成。	
+	documentstorage.commit()  # これをしないと実際にファイルに書き込まれない。	
+# 	pythonstrorage = scriptstorage.openStorageElement("python", ElementModes.READWRITE)  # ドキュメントにpythonストレージを開く、なければ作成。	 	
+# 	scriptstorage.commit()  # これをしないと実際にファイルに書き込まれない。	
+# 		
+	return
+		
 	if "Scripts" in documentstorage:
 		scriptstorage = documentstorage["Scripts"]
 	else:
 		scriptstorage = documentstorage.openStorageElement("Scripts", ElementModes.WRITE)  # 出力先に同名のストレージの作成。
-# 		scriptstorage.commit()
+		scriptstorage.commit()  # これをしないと実際にファイルに書き込まれない。
 	if "python" in scriptstorage:
 		pythonstrorage = scriptstorage["python"]
 	else:
 		pythonstrorage = scriptstorage.openStorageElement("python", ElementModes.WRITE) 
-# 		pythonstrorage.commit()
+		pythonstrorage.commit()
 	sourcedir = getSource(simplefileaccess)  # コピー元フォルダのfileurlを取得。	
 	if not sourcedir:
 		print("{} does not exist.".format(sourcedir))	
@@ -39,13 +51,13 @@ def macro():
 	filesystemstoragefactory = smgr.createInstanceWithContext('com.sun.star.embed.FileSystemStorageFactory', ctx)
 	filesystemstorage = filesystemstoragefactory.createInstanceWithArguments((sourcedir, ElementModes.READ))  # ファイルシステムストレージを取得。
 	toDocumentStorage(filesystemstorage, pythonstrorage)  # 再帰的にストレージの内容を出力先ストレージに展開。
-	documentstorage.commit()
+# 	documentstorage.commit()
 def toDocumentStorage(srcstorage, deststorage):  # SimpleFileAccess、ストレージ、出力先ストレージ	
 	for name in srcstorage:  # ストレージの各要素名について。
 		if srcstorage.isStorageElement(name):  # ストレージの時。
 			subdest = deststorage.openStorageElement(name, ElementModes.WRITE)  # 出力先に同名のストレージの作成。
 			toDocumentStorage(srcstorage[name], subdest)  # 子要素について同様にする。
-# 			subdest.commit()
+			subdest.commit()
 		elif srcstorage.isStreamElement(name):  # ストリームの時。
 			subdest = deststorage.openStreamElement(name, ElementModes.WRITE)  # 出力先に同名のストリームを作成。
 			inputstream = srcstorage[name].getInputStream()  # 読み取るファイルのインプットストリームを取得。
