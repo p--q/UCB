@@ -16,25 +16,32 @@ def macro():  # マクロでは利用不可。docを取得している行以降�
 	for component in components:  # 各コンポーネントについて。
 		if hasattr(component, "getURL"):  # スタートモジュールではgetURL()はないため。
 			if component.getURL()==doc_fileurl:  # fileurlが一致するとき、ドキュメントが開いているということ。
-				doc = XSCRIPTCONTEXT.getDocument()  # 開いているドキュメント(モデル)を取得。
+				doc = XSCRIPTCONTEXT.getDocument()
 				transientdocumentsdocumentcontentfactory = smgr.createInstanceWithContext("com.sun.star.frame.TransientDocumentsDocumentContentFactory", ctx)
 				transientdocumentsdocumentcontent = transientdocumentsdocumentcontentfactory.createDocumentContent(doc)
-				contentidentifierstring = transientdocumentsdocumentcontent.getIdentifier().getContentIdentifier()  # ex. vnd.sun.star.tdoc:/1
-				python_fileurl = "/".join((contentidentifierstring, "Scripts/python"))  # ex. vnd.sun.star.tdoc:/1/Scripts/python
-				source_dir = getSourceDir(simplefileaccess)  # 入力元フォルダのfileurlを取得。
-				if simplefileaccess.exists(source_dir):  # 入力元フォルダが存在するとき。
-					if not simplefileaccess.exists(python_fileurl):  # ドキュメント内フォルダがなければ作成しておかないといけない。
-						simplefileaccess.createFolder(python_fileurl)
-					simplefileaccess.copy(source_dir, python_fileurl)  # 入力元フォルダを埋め込みマクロフォルダにコピーする。
-				else:
-					print("The source macro folder does not exist in {}.".format(ods))
-				break	
+				pkgurl = transientdocumentsdocumentcontent.getIdentifier().getContentIdentifier()  # ex. vnd.sun.star.tdoc:/1
+				break
+	else:  # ドキュメントを開いていない時。__main__.InteractiveAugmentedIOException: Cannot store persistent data!と言われてできない。
+		urireferencefactory = smgr.createInstanceWithContext("com.sun.star.uri.UriReferenceFactory", ctx)  # UriReferenceFactory
+		urireference = urireferencefactory.parse(doc_fileurl)  # ドキュメントのUriReferenceを取得。
+		vndsunstarpkgurlreferencefactory = smgr.createInstanceWithContext("com.sun.star.uri.VndSunStarPkgUrlReferenceFactory", ctx)  # VndSunStarPkgUrlReferenceFactory
+		vndsunstarpkgurlreference = vndsunstarpkgurlreferencefactory.createVndSunStarPkgUrlReference(urireference)  # ドキュメントのvnd.sun.star.pkgプロトコールにUriReferenceを変換。
+		pkgurl = vndsunstarpkgurlreference.getUriReference()  # UriReferenceから文字列のURIを取得。
+	python_fileurl = "/".join((pkgurl, "Scripts/python"))  # ドキュメント内フォルダへのフルパスを取得。		
+	if simplefileaccess.exists(python_fileurl):  # 埋め込みマクロフォルダがすでにあるとき
+		simplefileaccess.kill(python_fileurl)  # 埋め込みマクロフォルダを削除。
+	simplefileaccess.createFolder(python_fileurl)  # 埋め込みマクロフォルダを作成。
+	sourcedir = getSource(simplefileaccess)  # コピー元フォルダのfileurlを取得。	
+	if sourcedir:  # コピー元フォルダが存在するとき。
+		simplefileaccess.copy(sourcedir, python_fileurl)  # 埋め込みマクロフォルダを出力先フォルダにコピーする。
 	else:
-		print("{} does not loaded.".format(ods))
-def getSourceDir(simplefileaccess):  # 出力先フォルダのfileurlを取得する。
+		print("{} does not exist.".format(sourcedir))	
+def getSource(simplefileaccess):  # コピー元フォルダのfileurlを取得する。
 	src_path = os.path.join(os.getcwd(), "src")  # srcフォルダのパスを取得。
 	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
-	return "/".join((src_fileurl, "Scripts/python"))
+	sourcedir = "/".join((src_fileurl, "Scripts/python"))
+	if simplefileaccess.exists(sourcedir):  # pythonフォルダがすでにあるとき
+		return sourcedir
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
 		import officehelper

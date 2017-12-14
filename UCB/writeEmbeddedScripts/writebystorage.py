@@ -21,36 +21,47 @@ def macro():
 				break
 	else:  # ドキュメントが開いていない時。
 		storagefactory = smgr.createInstanceWithContext('com.sun.star.embed.StorageFactory', ctx)  # StorageFactory
-		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.READ))  # odsファイルからストレージを読み取り専用で取得。
-	if not ("Scripts" in documentstorage and "python" in documentstorage["Scripts"]):
-		print("The embedded macro folder does not exist in {}.".format(ods))
+		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.WRITE))  # odsファイルからストレージを書き込み用で取得。
+	if "Scripts" in documentstorage:
+		scriptstorage = documentstorage["Scripts"]
+	else:
+		scriptstorage = documentstorage.openStorageElement("Scripts", ElementModes.WRITE)  # 出力先に同名のストレージの作成。
+		scriptstorage.commit()
+	if "python" in scriptstorage:
+		pythonstrorage = scriptstorage["python"]
+	else:
+		pythonstrorage = scriptstorage.openStorageElement("python", ElementModes.WRITE) 
+		pythonstrorage.commit()
+	sourcedir = getSource(simplefileaccess)  # コピー元フォルダのfileurlを取得。	
+	if not sourcedir:
+		print("{} does not exist.".format(sourcedir))	
 		return
-	source_dir = getSourceDir(simplefileaccess)  # 入力元フォルダのfileurlを取得。
-	if simplefileaccess.exists(source_dir):  # 入力元フォルダが存在するとき。
-		if not simplefileaccess.exists(python_fileurl):  # ドキュメント内フォルダがなければ作成しておかないといけない。
-			simplefileaccess.createFolder(python_fileurl)
-	
-	
-	
-	dest_dir = createDest(simplefileaccess)  # 出力先フォルダのfileurlを取得。
-	scriptsstorage = documentstorage["Scripts"]  # documentstorage["Scripts"]["python"]ではイテレーターになれない。
-	getContents(simplefileaccess, scriptsstorage["python"], dest_dir)  # 再帰的にストレージの内容を出力先フォルダに展開。
-def getContents(simplefileaccess, storage, pwd):  # SimpleFileAccess、ストレージ、出力フォルダのfileurl	
-	for name in storage:  # ストレージの各要素名について。
-		fileurl = "/".join((pwd, name))  # 出力先fileurl。
-		if storage.isStorageElement(name):  # ストレージのときはフォルダとして処理。
-			if not simplefileaccess.exists(fileurl):  # 出力先フォルダが存在しない時は作成する。
-				simplefileaccess.createFolder(fileurl)
-			getContents(simplefileaccess, storage[name], fileurl)  # 子要素について同様にする。
-		elif storage.isStreamElement(name):  # ストリームの時はファイルに書き出す。
-			simplefileaccess.writeFile(fileurl, storage[name].getInputStream())  # ファイルが存在しなければ新規作成してくれる。			
+	filesystemstoragefactory = smgr.createInstanceWithContext('com.sun.star.embed.FileSystemStorageFactory', ctx)
+	filesystemstorage = filesystemstoragefactory.createInstanceWithArguments((sourcedir, ElementModes.READ))  # ファイルシステムストレージを取得。
+	toDocumentStorage(filesystemstorage, pythonstrorage)  # 再帰的にストレージの内容を出力先ストレージに展開。
+	documentstorage.commit()
+def toDocumentStorage(srcstorage, deststorage):  # SimpleFileAccess、ストレージ、出力先ストレージ	
+	for name in srcstorage:  # ストレージの各要素名について。
+		if srcstorage.isStorageElement(name):  # ストレージの時。
+			subdest = deststorage.openStorageElement(name, ElementModes.WRITE)  # 出力先に同名のストレージの作成。
+			toDocumentStorage(srcstorage[name], subdest)  # 子要素について同様にする。
+			subdest.commit()
+		elif srcstorage.isStreamElement(name):  # ストリームの時。
+			subdest = deststorage.openStreamElement(name, ElementModes.WRITE)  # 出力先に同名のストリームを作成。
+			inputstream = srcstorage[name].getInputStream()  # 読み取るファイルのインプットストリームを取得。
+			outputstream = subdest.getOutputStream()  # 書き込むファイルのアウトプットストリームを取得。
+			dummy, bytes = inputstream.readBytes([], inputstream.available())  # インプットストリームからデータをすべて読み込む。バイト配列の要素数とバイト配列のタプルが返る。
+			outputstream.writeBytes(bytes)  # バイト配列をアウトプットストリームに渡す。	
 			
-			
-			
-def getSourceDir(simplefileaccess):  # 出力先フォルダのfileurlを取得する。
+			print(name)
+			print(dummy)
+				
+def getSource(simplefileaccess):  # コピー元フォルダのfileurlを取得する。
 	src_path = os.path.join(os.getcwd(), "src")  # srcフォルダのパスを取得。
 	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
-	return "/".join((src_fileurl, "Scripts/python"))
+	sourcedir = "/".join((src_fileurl, "Scripts/python"))
+	if simplefileaccess.exists(sourcedir):  # pythonフォルダがすでにあるとき
+		return sourcedir
 if __name__ == "__main__":  # オートメーションで実行するとき
 	def automation():  # オートメーションのためにglobalに出すのはこの関数のみにする。
 		import officehelper
