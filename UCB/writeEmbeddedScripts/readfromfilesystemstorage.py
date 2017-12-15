@@ -7,77 +7,25 @@ from com.sun.star.embed import ElementModes  # 定数
 def macro():  
 	ctx = XSCRIPTCONTEXT.getComponentContext()  # コンポーネントコンテクストの取得。
 	smgr = ctx.getServiceManager()  # サービスマネージャーの取得。	
-	simplefileaccess = smgr.createInstanceWithContext("com.sun.star.ucb.SimpleFileAccess", ctx)  # SimpleFileAccess	
+	simplefileaccess = smgr.createInstanceWithContext("com.sun.star.ucb.SimpleFileAccess", ctx)  # SimpleFileAccess
 	os.chdir("..")  # 一つ上のディレクトリに移動。
 	sourcedir = getSource(simplefileaccess)  # コピー元フォルダのfileurlを取得。	
 	filesystemstoragefactory = smgr.createInstanceWithContext('com.sun.star.embed.FileSystemStorageFactory', ctx)
 	filesystemstorage = filesystemstoragefactory.createInstanceWithArguments((sourcedir, ElementModes.READ))  # ファイルシステムストレージを取得。
 	for name in filesystemstorage:
 		if filesystemstorage.isStreamElement(name):
-# 			xstream = filesystemstorage.cloneStreamElement(name)
-# 			inputstream = xstream.getInputStream()
-# 			print(inputstream.available())  # 0
-# 			print(inputstream.getLength())  # 263
-# 			print(inputstream.getPosition())  # 263
-# 						
-# 			inputstream.seek(0)  # シークポインタをストリームの先頭に移動させる。
-# 			print(inputstream.getPosition())  # 0
-# 			print(inputstream.available())  # 263
+			xstream = filesystemstorage.cloneStreamElement(name)
+			inputstream = xstream.getInputStream()
+			print(inputstream.available())  # 0
+			xstream = filesystemstorage.openStreamElement(name, ElementModes.READ)
+			inputstream = xstream.getInputStream()  # 0
+			print(inputstream.available())  # 0
+			inputstream = xstream.getInputStream()
+			print(inputstream.available())  # 0
+# 	return	
+	xstream4 = filesystemstorage.openStreamElementByHierarchicalName("pythonpath/tmp2.py", ElementModes.READ)
 			
-			print(simplefileaccess.getSize("/".join((sourcedir, name))))
-			return
-			
-# 			inputstream = simplefileaccess.openFileRead("/".join((sourcedir, name)))	
-# 			print(inputstream.getLength())  # 263
-# 			print(inputstream.getPosition())  # 0
-# 			print(inputstream.available())  # 0			
-# 			inputstream.seek(0)  # シークポインタをストリームの先頭に移動させる。
-# 			print(inputstream.available())  # 0		
-# 			return
-			
-# 			xstream = simplefileaccess.openFileReadWrite("/".join((sourcedir, name)))
-# # 			
-# 			tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
-# 			tcu.wtree(xstream)
-# 			return
-			
-# 			inputstream = xstream.getInputStream()	
-# 			print(inputstream.getLength())  # 263
-# 			print(inputstream.getPosition())  # 0
-# 			print(inputstream.available())  # 0			
-# 			inputstream.seek(0)  # シークポインタをストリームの先頭に移動させる。
-# 			print(inputstream.available())  # 0						
-	
-# 			outputstream = simplefileaccess.openFileWrite("/".join((sourcedir, name)))
-# 			tcu.wtree(outputstream)
-	
-
-		
-	
-	
-			
-# 	return		
-			
-			
-			
-# 			xstream = filesystemstorage.cloneStreamElement(name)
-# 			inputstream = xstream.getInputStream()
-# 			print(inputstream.available())  # 0
-# 			xstream = filesystemstorage.openStreamElement(name, ElementModes.READ)
-# 			inputstream = xstream.getInputStream()  # 0
-# 			print(inputstream.available())  # 0
-# 			xstream = filesystemstorage[name]
-# 			inputstream = xstream.getInputStream()
-# 			print(inputstream.available())  # 0			
-			
-			
-			
-# 			xstream = filesystemstorage.cloneStreamElement(name)
-# 			xstream2 = filesystemstorage.openStreamElement(name, ElementModes.READ)
-# 			xstream3 = filesystemstorage[name]
-# 			xstream4 = filesystemstorage.openStreamElementByHierarchicalName("/{}".format(name), ElementModes.READ)
-			
-# 			
+	return
 # 			tcu = smgr.createInstanceWithContext("pq.Tcu", ctx)  # サービス名か実装名でインスタンス化。
 # 			tcu.wtree(xstream)
 			
@@ -92,27 +40,27 @@ def macro():
 	
 	
 	
-# 	return
+	return
 	# 	filesystemstoragefactory = smgr.createInstanceWithContext('com.sun.star.embed.FileSystemStorageFactory', ctx)
 # 	filesystemstorage = filesystemstoragefactory.createInstanceWithArguments((sourcedir, ElementModes.READ))  # ファイルシステムストレージを取得。
 	
 	
 	
-# 	simplefileaccess = smgr.createInstanceWithContext("com.sun.star.ucb.SimpleFileAccess", ctx)  # SimpleFileAccess
-# 	os.chdir("..")  # 一つ上のディレクトリに移動。
-# 	ods = glob.glob("*.ods")[0]  # odsファイルを取得。最初の一つのみ取得。
-# 	systempath = os.path.join(os.getcwd(), ods)  # odsファイルのフルパス。
-# 	doc_fileurl = unohelper.systemPathToFileUrl(systempath)  # fileurlに変換。
-# 	desktop = ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # デスクトップの取得。
-# 	components = desktop.getComponents()  # ロードしているコンポーネントコレクションを取得。
-# 	for component in components:  # 各コンポーネントについて。
-# 		if hasattr(component, "getURL"):  # スタートモジュールではgetURL()はないため。
-# 			if component.getURL()==doc_fileurl:  # fileurlが一致するとき
-# 				documentstorage = component.getDocumentStorage()  # コンポーネントからストレージを取得。
-# 				break
-# 	else:  # ドキュメントが開いていない時。
-# 		storagefactory = smgr.createInstanceWithContext('com.sun.star.embed.StorageFactory', ctx)  # StorageFactory
-# 		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.READWRITE))  # odsファイルからストレージを書き込み用で取得。
+	simplefileaccess = smgr.createInstanceWithContext("com.sun.star.ucb.SimpleFileAccess", ctx)  # SimpleFileAccess
+	os.chdir("..")  # 一つ上のディレクトリに移動。
+	ods = glob.glob("*.ods")[0]  # odsファイルを取得。最初の一つのみ取得。
+	systempath = os.path.join(os.getcwd(), ods)  # odsファイルのフルパス。
+	doc_fileurl = unohelper.systemPathToFileUrl(systempath)  # fileurlに変換。
+	desktop = ctx.getByName('/singletons/com.sun.star.frame.theDesktop')  # デスクトップの取得。
+	components = desktop.getComponents()  # ロードしているコンポーネントコレクションを取得。
+	for component in components:  # 各コンポーネントについて。
+		if hasattr(component, "getURL"):  # スタートモジュールではgetURL()はないため。
+			if component.getURL()==doc_fileurl:  # fileurlが一致するとき
+				documentstorage = component.getDocumentStorage()  # コンポーネントからストレージを取得。
+				break
+	else:  # ドキュメントが開いていない時。
+		storagefactory = smgr.createInstanceWithContext('com.sun.star.embed.StorageFactory', ctx)  # StorageFactory
+		documentstorage = storagefactory.createInstanceWithArguments((doc_fileurl, ElementModes.READWRITE))  # odsファイルからストレージを書き込み用で取得。
 # 		
 # 		
 # 		

@@ -18,4 +18,5 @@ encoding//tools/getEmbeddedScripts5.py=utf-8
 encoding//tools/getEmbeddedScripts6.py=utf-8
 encoding//tools/replaceEmbeddedScripts.py=utf-8
 encoding//writeEmbeddedScripts/copybyurl.py=utf-8
+encoding//writeEmbeddedScripts/readfromfilesystemstorage.py=utf-8
 encoding//writeEmbeddedScripts/writebystorage.py=utf-8

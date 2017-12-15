@@ -39,8 +39,8 @@ def getContents(storage, dest):  # SimpleFileAccess、ストレージ、出力�
 			subdest = dest.openStreamElement(name, ElementModes.WRITE)  # 出力先に同名のストリームを作成。
 			inputstream = storage[name].getInputStream()  # 読み取るファイルのインプットストリームを取得。
 			outputstream = subdest.getOutputStream()  # 書き込むファイルのアウトプットストリームを取得。
-			dummy, bytes = inputstream.readBytes([], inputstream.available())  # インプットストリームからデータをすべて読み込む。バイト配列の要素数とバイト配列のタプルが返る。
-			outputstream.writeBytes(bytes)  # バイト配列をアウトプットストリームに渡す。
+			dummy, b = inputstream.readBytes([], inputstream.available())  # インプットストリームからデータをすべて読み込む。バイト配列の要素数とバイト配列のタプルが返る。
+			outputstream.writeBytes(b)  # バイト配列をアウトプットストリームに渡す。
 def createDest(simplefileaccess):  # 出力先フォルダのfileurlを取得する。
 	src_path = os.path.join(os.getcwd(), "src")  # srcフォルダのパスを取得。
 	src_fileurl = unohelper.systemPathToFileUrl(src_path)  # fileurlに変換。
