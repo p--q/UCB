@@ -5,6 +5,7 @@ encoding//getEmbeddedScripts/copyfromtdc.py=utf-8
 encoding//getEmbeddedScripts/getbypackage.py=utf-8
 encoding//getEmbeddedScripts/getbystorage.py=utf-8
 encoding//getEmbeddedScripts/getbyzipfileaccess.py=utf-8
+encoding//getEmbeddedScripts/tobytes.py=utf-8
 encoding//getEmbeddedScripts/tofilesystemstorage.py=utf-8
 encoding//src/ChildrenRetriever.py=utf-8
 encoding//src/ChildrenRetriever2.py=utf-8
