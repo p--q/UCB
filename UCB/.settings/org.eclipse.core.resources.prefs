@@ -20,6 +20,7 @@ encoding//tools/getEmbeddedScripts5.py=utf-8
 encoding//tools/getEmbeddedScripts6.py=utf-8
 encoding//tools/replaceEmbeddedScripts.py=utf-8
 encoding//writeEmbeddedScripts/copybyurl.py=utf-8
+encoding//writeEmbeddedScripts/copybyurl2.py=utf-8
 encoding//writeEmbeddedScripts/readstreamfromfilesystem.py=utf-8
 encoding//writeEmbeddedScripts/writetopackage.py=utf-8
 encoding//writeEmbeddedScripts/writetostorage.py=utf-8
